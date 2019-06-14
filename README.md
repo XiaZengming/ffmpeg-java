@@ -85,3 +85,60 @@ public class VideoEncoding {
     }
 }
 ```
+
+
+转码时进度监听
+```java
+
+import com.itshidu.ffmpeg.FFmpeg
+import com.itshidu.ffmpeg.FFmpegExecutor
+import com.itshidu.ffmpeg.FFmpegUtils
+import com.itshidu.ffmpeg.FFprobe
+import com.itshidu.ffmpeg.builder.FFmpegBuilder
+import com.itshidu.ffmpeg.job.FFmpegJob
+import com.itshidu.ffmpeg.probe.FFmpegProbeResult
+import com.itshidu.ffmpeg.progress.Progress
+import com.itshidu.ffmpeg.progress.ProgressListener
+
+import java.util.concurrent.TimeUnit
+
+class GetProgressWhileEncoding {
+    final static String FFMPEG_HOME = "D:/Documents/ProgramFiles/ffmpeg-20190219-ff03418-win64-static/bin/"
+    public static void main(String[] args) {
+
+        FFmpeg ffmpeg = new FFmpeg(FFMPEG_HOME+"ffmpeg.exe")
+        FFprobe ffprobe = new FFprobe(FFMPEG_HOME+"ffprobe.exe")
+
+        FFmpegExecutor executor = new FFmpegExecutor(ffmpeg, ffprobe)
+        FFmpegProbeResult probeResult = ffprobe.probe("D:/abc/002.mp4")
+        FFmpegBuilder builder = new FFmpegBuilder()
+                .setInput(probeResult) // Or filename
+                .addOutput("D:/abc/002_output.mp4")
+                .done()
+        final double duration_ns = probeResult.getFormat().duration * TimeUnit.SECONDS.toNanos(1);
+        FFmpegJob job = executor.createJob(builder, new ProgressListener() {
+            // Using the FFmpegProbeResult determine the duration of the input
+
+
+            public void progress(Progress progress) {
+                double percentage = progress.out_time_ns / duration_ns;
+
+                // Print out interesting information about the progress
+                System.out.println(String.format(
+                        "[%.0f%%] status:%s frame:%d time:%s ms fps:%.0f speed:%.2fx",
+                        percentage * 100,
+                        progress.status,
+                        progress.frame,
+                        FFmpegUtils.toTimecode(progress.out_time_ns, TimeUnit.NANOSECONDS),
+                        progress.fps.doubleValue(),
+                        progress.speed
+                ));
+            }
+        });
+
+        job.run();
+    }
+}
+```
+
+
