@@ -1,6 +1,14 @@
 # ffmpeg-java
 Java Interface for FFmpeg Command-line
 
+引入Maven依赖：
+```xml
+<dependency>
+    <groupId>com.itshidu.ffmpeg</groupId>
+    <artifactId>ffmpeg-java</artifactId>
+    <version>1.0</version>
+</dependency>
+```
 
 
 获取媒体信息
